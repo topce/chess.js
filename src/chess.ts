@@ -394,7 +394,7 @@ export class Chess {
         const color = piece < 'a' ? WHITE : BLACK
         this.put(
           { type: piece.toLowerCase() as PieceSymbol, color },
-          algebraic(square),
+          algebraic(square)
         )
         square++
       }
@@ -430,10 +430,10 @@ export class Chess {
    * @param eol The string to use as the end-of-line character.  Defaults to `\n`.
    */
   ascii(eol = '\n'): string {
-    const pieces = RANKS.map(rank => {
+    const pieces = RANKS.map((rank) => {
       const rankPieces = this._board
         .slice(rank * 16, rank * 16 + 8)
-        .map(piece => {
+        .map((piece) => {
           if (piece) {
             return ` ${symbol(piece)} `
           } else {
@@ -457,7 +457,7 @@ export class Chess {
    * Returns a representation of the chessboard in Forsyth–Edwards Notation (FEN).
    */
   fen(): string {
-    const fen = RANKS.map(rank => {
+    const fen = RANKS.map((rank) => {
       const pieces = this._board.slice(rank * 16, rank * 16 + 8)
 
       return pieces.reduce(
@@ -474,7 +474,7 @@ export class Chess {
             }
           }
         },
-        { fen: '', empty: 0 } as { fen: string; empty: number },
+        { fen: '', empty: 0 } as { fen: string; empty: number }
       ).fen
     }).join('/')
 
@@ -733,6 +733,148 @@ export class Chess {
     return !this.inCheck() && this._moves({ legal: true }).length === 0
   }
 
+  hasCheckmateIn(n: number): Move0x88 | null {
+    let winningMove = null
+    const moves = this._moves({ legal: true })
+    if (n === 1) {
+      for (let i = 0; i < moves.length; i++) {
+        const move = moves[i]
+        this._makeMove(move)
+        if (this.inCheckmate()) {
+          winningMove = move
+          this._undoMove()
+          break
+        }
+        this._undoMove()
+      }
+      return winningMove
+    } else {
+      for (let i = 0; i < moves.length; i++) {
+        const move = moves[i]
+        this._makeMove(move)
+        const oponentMoves = this._moves({ legal: true })
+        let hasCheckMate = true
+        for (let j = 0; j < oponentMoves.length; j++) {
+          const oponentMove = oponentMoves[j]
+          this._makeMove(oponentMove)
+          if (!this.hasCheckmateIn(n - 1)) {
+            hasCheckMate = false
+            this._undoMove()
+            break
+          }
+          this._undoMove()
+        }
+        if (hasCheckMate) {
+          winningMove = move
+          this._undoMove()
+          break
+        }
+        this._undoMove()
+      }
+      return winningMove
+    }
+  }
+
+  hasCheckmate(): Move0x88 | null {
+    let winningMove = null
+    const moves = this._moves({ legal: true })
+    for (let i = 0; i < moves.length; i++) {
+      const move = moves[i]
+      this._makeMove(move)
+      if (this.inCheckmate()) {
+        winningMove = move
+        this._undoMove()
+        break
+      }
+      this._undoMove()
+    }
+    return winningMove
+  }
+
+  hasCheckmateInTwoMoves(): Move0x88 | null {
+    let winningMove = null
+    const moves = this._moves({ legal: true })
+    for (let i = 0; i < moves.length; i++) {
+      const move = moves[i]
+      this._makeMove(move)
+      const oponentMoves = this._moves({ legal: true })
+      let hasCheckMate = true
+      for (let j = 0; j < oponentMoves.length; j++) {
+        const oponentMove = oponentMoves[j]
+        this._makeMove(oponentMove)
+        if (!this.hasCheckmate()) {
+          hasCheckMate = false
+          this._undoMove()
+          break
+        }
+        this._undoMove()
+      }
+      if (hasCheckMate) {
+        winningMove = move
+        this._undoMove()
+        break
+      }
+      this._undoMove()
+    }
+    return winningMove
+  }
+
+  hasCheckmateInThreeMoves(): Move0x88 | null {
+    const moves = this._moves({ legal: true })
+    let winningMove = null
+    for (let i = 0; i < moves.length; i++) {
+      const move = moves[i]
+      this._makeMove(move)
+      const oponentMoves = this._moves({ legal: true })
+      let hasCheckMate = true
+      for (let j = 0; j < oponentMoves.length; j++) {
+        const oponentMove = oponentMoves[j]
+        this._makeMove(oponentMove)
+        if (!this.hasCheckmateInTwoMoves()) {
+          hasCheckMate = false
+          this._undoMove()
+          break
+        }
+        this._undoMove()
+      }
+      if (hasCheckMate) {
+        winningMove = move
+        this._undoMove()
+        break
+      }
+      this._undoMove()
+    }
+    return winningMove
+  }
+
+  hasCheckmateInFourMoves(): Move0x88 | null {
+    const moves = this._moves({ legal: true })
+    let winningMove = null
+    for (let i = 0; i < moves.length; i++) {
+      const move = moves[i]
+      this._makeMove(move)
+      const oponentMoves = this._moves({ legal: true })
+      let hasCheckMate = true
+      for (let j = 0; j < oponentMoves.length; j++) {
+        const oponentMove = oponentMoves[j]
+        this._makeMove(oponentMove)
+        if (!this.hasCheckmateInThreeMoves()) {
+          hasCheckMate = false
+          this._undoMove()
+          break
+        }
+        this._undoMove()
+      }
+      if (hasCheckMate) {
+        winningMove = move
+        this._undoMove()
+        break
+      }
+      this._undoMove()
+    }
+    return winningMove
+  }
+
   //insufficientMaterial() {
   //  this._board.reduce(
   //    (
@@ -756,7 +898,7 @@ export class Chess {
     moves: Move0x88[],
     from: number,
     to: number,
-    flags: number = BITS.NONE,
+    flags: number = BITS.NONE
   ): void {
     const { type, color } = this._board[from] as Piece
 
@@ -773,8 +915,8 @@ export class Chess {
 
     if (type === PAWN && (rank(to) === RANK_8 || rank(to) === RANK_1)) {
       const promotions = [KNIGHT, BISHOP, ROOK, QUEEN]
-      promotions.forEach(promotion =>
-        moves.push({ ...move, flags: flags | BITS.PROMOTION, promotion }),
+      promotions.forEach((promotion) =>
+        moves.push({ ...move, flags: flags | BITS.PROMOTION, promotion })
       )
     } else {
       moves.push(move)
@@ -926,7 +1068,7 @@ export class Chess {
     if (legal) {
       const us = this._turn
 
-      return moves.filter(move => {
+      return moves.filter((move) => {
         this._makeMove(move)
         const inCheck = this._isKingAttacked(us)
         this._undoMove()
@@ -954,7 +1096,7 @@ export class Chess {
         to: algebraic(to),
       }))
     } else {
-      return moves.map(move => this._toSan(move))
+      return moves.map((move) => this._toSan(move))
     }
   }
 
@@ -982,7 +1124,7 @@ export class Chess {
   /* this function is used to uniquely identify ambiguous moves */
   protected _getDisambiguator(
     { from, to, piece }: Move0x88,
-    sloppy = false,
+    sloppy = false
   ): string {
     const moves = this._moves({ legal: !sloppy })
 
@@ -1006,7 +1148,7 @@ export class Chess {
 
         return [ambiguities, sameRank, sameFile]
       },
-      [0, 0, 0],
+      [0, 0, 0]
     )
 
     if (ambiguities > 0) {
